@@ -1,15 +1,15 @@
-## clone the repository with submodules
+## clone the repository 
 ```
-git clone --recurse-submodules https://github.com/JiaPy666/controllo-parcheggi-UDA.git
-```
-
-## update submodule
-```
-git submodule update --init --recursive
+git clone https://github.com/JiaPy666/frontend-uda.git
 ```
 
 ## avvia il vite
 ```
-cd controllo-parcheggi-UDA
+cd frontend-uda
+```
+```
+npm install
+```
+```
 npm run dev
 ```
