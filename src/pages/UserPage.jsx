@@ -2,8 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import ParkingMapView from '../components/ParkingMapView'
 import '../App.css'
 import './UserPage.css'
-
-const API = 'http://127.0.0.1:5000/api'
+import { API_BASE as API } from '../services/api'
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -248,7 +247,7 @@ function ParkingLocationMap({ darkMode }) {
     script.onload = () => {
       if (!mapRef.current || mapInstanceRef.current) return
       const L = window.L
-      // parcheggio di vittoria
+      // Coordinate parcheggi Piazza Vittoria
       const lat = 45.537936, lng = 10.218876
       const map = L.map(mapRef.current, { zoomControl: true, scrollWheelZoom: false }).setView([lat, lng], 16)
       mapInstanceRef.current = map
@@ -274,10 +273,10 @@ function ParkingLocationMap({ darkMode }) {
       marker.bindPopup(`
         <div style="font-family:system-ui;padding:8px;min-width:200px">
           <strong style="font-size:15px">🅿</strong><br>
-          <span style="color:#64748b;font-size:13px">Parcheggio di Piazza Vittoria</span><br>
+          <span style="color:#64748b;font-size:13px">Parcheggio Piazza Vittoria</span><br>
           <hr style="margin:8px 0;border:none;border-top:1px solid #e2e8f0">
           <span style="color:#2563eb;font-size:13px">📍 Piazza Vittoria, Brescia</span><br>
-          <span style="font-size:12px;color:#64748b">⏰ Parcheggi 24h/24</span>
+          <span style="font-size:12px;color:#64748b">⏰ Aperto 24h/24</span>
         </div>
       `).openPopup()
 
@@ -293,7 +292,7 @@ function ParkingLocationMap({ darkMode }) {
         <span style={{fontSize:24}}>📍</span>
         <div>
           <div style={{fontWeight:700,fontSize:16}}>Posizione Parcheggio</div>
-          <div style={{fontSize:13,opacity:0.8}}>Parcheggio di Piazza Vittoria</div>
+          <div style={{fontSize:13,opacity:0.8}}>Parcheggio Piazza Vittoria</div>
         </div>
       </div>
       <div ref={mapRef} style={{height:320,width:'100%'}} />
@@ -1067,7 +1066,7 @@ export default function UserPage({ initialUser, onLogout }) {
               <p className="muted-text">
                 {activeView === 'spots' ? `${availableSpots.length} posti liberi · Clicca per prenotare`
                   : activeView === 'map' ? 'Clicca un posto libero per prenotarlo'
-                  : activeView === 'location' ? 'Parcheggio di Piazza Vittoria'
+                  : activeView === 'location' ? 'Parcheggio Piazza Vittoria'
                   : activeView === 'bookings' ? `${activeBookings.length} attive · ${pastBookings.length} concluse`
                   : activeView === 'stats' ? 'Analisi frequenza prenotazioni'
                   : 'Calendario interventi programmati'}
@@ -1161,7 +1160,7 @@ export default function UserPage({ initialUser, onLogout }) {
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:16,marginTop:20}}>
                 {[
                   {icon:'⏰',label:'Orario',value:'24h / 7 giorni'},
-                  {icon:'📞',label:'Telefono',value:'+39 030 123 1234'},
+                  {icon:'📞',label:'Telefono',value:'+39 080 583 5200'},
                   {icon:'🚌',label:'Navetta',value:'Ogni 15 minuti'},
                 ].map(i => (
                   <div key={i.label} style={{textAlign:'center',padding:20,background:dm?'#0f172a':'#f8fafc',borderRadius:14,border:`1px solid ${dm?'#334155':'#e2e8f0'}`}}>

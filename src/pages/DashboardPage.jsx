@@ -12,8 +12,9 @@ import ViewToggle from '../components/ViewToggle'
 import ParkingMapView from '../components/ParkingMapView'
 import ZoneSummaryCards from '../components/ZoneSummaryCards'
 import AdminActions from '../components/AdminActions'
+import { API_BASE } from '../services/api'
 
-const API_URL = 'http://127.0.0.1:5000/api/spots'
+const API_URL = `${API_BASE}/spots`
 
 function DashboardPage() {
   const [spots, setSpots] = useState([])
@@ -134,7 +135,7 @@ function DashboardPage() {
   const handleSaveSpot = async (updatedSpot) => {
     console.log('Spot da salvare:', updatedSpot)
     try {
-      const response = await fetch(`http://127.0.0.1:5000/api/spots/${updatedSpot.id}`, {
+      const response = await fetch(`${API_BASE}/spots/${updatedSpot.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -27,6 +27,268 @@
   --radius-lg: 18px;
   --radius-md: 14px;
   --radius-sm: 10px;
+
+  /* Scrollbar */
+  --scrollbar-track: #eef2f8;
+  --scrollbar-thumb: #c1cfe3;
+  --scrollbar-thumb-hover: #94a3b8;
+}
+
+/* ===== DARK MODE VARIABLES ===== */
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --panel: #1e293b;
+  --panel-2: #162032;
+  --border-color: #334155;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+
+  --shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 18px 45px rgba(0, 0, 0, 0.5);
+
+  --scrollbar-track: #1e293b;
+  --scrollbar-thumb: #334155;
+  --scrollbar-thumb-hover: #475569;
+}
+
+/* ===== CUSTOM SCROLLBAR — globale ===== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+  border-radius: 99px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 99px;
+  border: 2px solid var(--scrollbar-track);
+  transition: background 0.2s;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+*::-webkit-scrollbar-corner {
+  background: var(--scrollbar-track);
+}
+
+/* ===== DARK MODE — overrides globali ===== */
+[data-theme="dark"] body {
+  background: #0f172a;
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .panel,
+[data-theme="dark"] .card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .header-panel,
+[data-theme="dark"] .header-stat {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .page-title,
+[data-theme="dark"] .section-title,
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3 {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .muted-text,
+[data-theme="dark"] .eyebrow,
+[data-theme="dark"] .header-stat-label {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .app-container {
+  background: #0f172a !important;
+}
+
+[data-theme="dark"] .sidebar-container {
+  background: #0a1120 !important;
+  border-color: #1e293b !important;
+}
+
+[data-theme="dark"] .dashboard-content {
+  background: #0f172a !important;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  background: #0f172a !important;
+  color: #f1f5f9 !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: #475569 !important;
+}
+
+[data-theme="dark"] .btn-secondary {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #cbd5e1 !important;
+}
+
+[data-theme="dark"] .btn-secondary:hover {
+  background: #334155 !important;
+}
+
+[data-theme="dark"] .spot-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .spot-card:hover {
+  background: #263348 !important;
+  border-color: #2563eb !important;
+}
+
+[data-theme="dark"] .spot-id {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .spot-meta {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .zone-tab {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .zone-tab.active,
+[data-theme="dark"] .zone-tab:hover {
+  background: #2563eb !important;
+  color: white !important;
+  border-color: #2563eb !important;
+}
+
+[data-theme="dark"] .zone-summary-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .zone-summary-card.active {
+  background: linear-gradient(135deg, #1e3a8a, #1e293b) !important;
+  border-color: #2563eb !important;
+}
+
+[data-theme="dark"] .stat-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .stat-value {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .filter-label,
+[data-theme="dark"] .filter-section-title {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .filter-group {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .search-input {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.75) !important;
+}
+
+[data-theme="dark"] .modal-content {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .modal-label {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .admin-action-card {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .admin-action-card.admin-action-primary {
+  background: linear-gradient(180deg, #1e3a8a22, #1e3a8a44) !important;
+  border-color: #2563eb55 !important;
+}
+
+[data-theme="dark"] .admin-action-card.admin-action-danger {
+  background: linear-gradient(180deg, #7f1d1d22, #7f1d1d44) !important;
+  border-color: #ef444455 !important;
+}
+
+[data-theme="dark"] .admin-action-title {
+  color: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .admin-action-icon {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme="dark"] .parking-road-horizontal,
+[data-theme="dark"] .parking-road-vertical,
+[data-theme="dark"] .major-road-compact,
+[data-theme="dark"] .focus-main-road,
+[data-theme="dark"] .focus-main-road-compact,
+[data-theme="dark"] .overview-main-road,
+[data-theme="dark"] .overview-mini-road {
+  background: #1a2840 !important;
+  border-color: #263550 !important;
+}
+
+[data-theme="dark"] .parking-zone-realistic,
+[data-theme="dark"] .parking-zone-compact,
+[data-theme="dark"] .overview-zone-card,
+[data-theme="dark"] .overview-mini-zone {
+  background: #16213a !important;
+  border-color: #2d3f5e !important;
+}
+
+[data-theme="dark"] .zone-mini-map {
+  background: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+[data-theme="dark"] .zone-block {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .zone-block.active {
+  background: #1e3a8a !important;
+  border-color: #2563eb !important;
+  color: white !important;
 }
 
 * {

@@ -3,8 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import UserPage from './pages/UserPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
-
-const API = 'http://127.0.0.1:5000/api'
+import { API_BASE as API } from './services/api.js'
 
 function Root() {
   const [user, setUser] = useState(null)

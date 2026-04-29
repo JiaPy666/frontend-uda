@@ -3,6 +3,7 @@ import './App.css'
 import mockSpots from './data/mockSpots'
 import ParkingMapView from './components/ParkingMapView'
 import AdminActions from './components/AdminActions'
+import { API_BASE } from './services/api'
 import { updateSpot } from './services/api.js'
 
 
@@ -49,7 +50,7 @@ function App({ user, onLogout }) {
 
   // Aggiungi questo blocco per scaricare i dati dal DB
   useEffect(() => {
-    fetch("http://127.0.0.1:5000/api/spots")
+    fetch(`${API_BASE}/spots`)
       .then(res => res.json())
       .then(data => {
         setSpots(data);
@@ -188,7 +189,7 @@ function App({ user, onLogout }) {
   async function fetchBookings() {
     setBookingsLoading(true)
     try {
-      const res = await fetch('http://127.0.0.1:5000/api/bookings')
+      const res = await fetch(`${API_BASE}/bookings`)
       const data = await res.json()
       setBookings(Array.isArray(data) ? data : [])
     } catch (e) {
@@ -205,12 +206,12 @@ function App({ user, onLogout }) {
   async function handleAdminCancelBooking(bookingId) {
     if (!confirm('Annullare questa prenotazione?')) return
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/bookings/${bookingId}/cancel`, { method: 'POST' })
+      const res = await fetch(`${API_BASE}/bookings/${bookingId}/cancel`, { method: 'POST' })
       if (res.ok) {
         showAdminNotif('🗑 Prenotazione annullata')
         fetchBookings()
         // Aggiorna anche i posti
-        fetch('http://127.0.0.1:5000/api/spots').then(r => r.json()).then(setSpots)
+        fetch(`${API_BASE}/spots`).then(r => r.json()).then(setSpots)
       }
     } catch (e) { showAdminNotif('❌ Errore di rete', 'error') }
   }

@@ -1,8 +1,7 @@
 import { useState } from 'react'
 import '../App.css'
 import './UserPage.css'
-
-const API = 'http://127.0.0.1:5000/api'
+import { API_BASE as API } from '../services/api'
 
 export default function LoginPage({ onLogin }) {
   const [mode, setMode] = useState('login') // 'login' | 'register'
