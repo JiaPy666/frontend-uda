@@ -13,6 +13,7 @@ import ParkingMapView from '../components/ParkingMapView'
 import ZoneSummaryCards from '../components/ZoneSummaryCards'
 import AdminActions from '../components/AdminActions'
 import { API_BASE } from '../services/api'
+import MaintenancePage from './MaintenancePage'
 
 const API_URL = `${API_BASE}/spots`
 
@@ -23,6 +24,7 @@ function DashboardPage() {
   const [selectedSpot, setSelectedSpot] = useState(null)
   const [currentView, setCurrentView] = useState('overview')
   const [loading, setLoading] = useState(true)
+  const [adminView, setAdminView] = useState('dashboard')
   const [filters, setFilters] = useState({
     zone: '',
     status: '',
@@ -204,10 +206,17 @@ function DashboardPage() {
             filters={filters}
             onFilterChange={handleFilterChange}
             onResetFilters={handleResetFilters}
+            activeAdminView={adminView}
+            onAdminViewChange={setAdminView}
+            spotStats={globalSummary}
           />
         </aside>
 
         <main className="main-content">
+          {adminView === 'maintenance' ? (
+            <MaintenancePage />
+          ) : (
+          <>
           <Header onResetFilters={handleResetFilters} />
 
           <div className="dashboard-content">
@@ -269,6 +278,8 @@ function DashboardPage() {
               onSimulateOccupancy={handleSimulateOccupancy}
             />
           </div>
+          </>
+          )}
         </main>
       </div>
 

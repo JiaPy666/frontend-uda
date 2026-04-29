@@ -451,35 +451,95 @@ function FaultReportModal({ spot, onClose, onSubmit }) {
 
 // ─── Loyalty Widget ───────────────────────────────────────────────────────────
 
-function LoyaltyWidget({ points, darkMode }) {
-  const nextReward = Math.ceil(points / 10000) * 10000
-  const pct = Math.min(100, (points % 10000) / 100)
+function LoyaltyWidget({ points, onRedeem, darkMode }) {
+  const POINTS_PER_REWARD = 10000
+  const cyclePoints = points % POINTS_PER_REWARD
+  const pct = Math.min(100, (cyclePoints / POINTS_PER_REWARD) * 100)
+  const freeHoursAvailable = Math.floor(points / POINTS_PER_REWARD)
+  const canRedeem = freeHoursAvailable > 0
+  const [redeeming, setRedeeming] = useState(false)
+
+  async function handleRedeem() {
+    if (!canRedeem || redeeming) return
+    setRedeeming(true)
+    await new Promise(r => setTimeout(r, 800))
+    onRedeem()
+    setRedeeming(false)
+  }
 
   return (
     <div style={{
-      background: darkMode ? 'linear-gradient(135deg,#1e3a8a,#1e293b)' : 'linear-gradient(135deg,#eff6ff,#dbeafe)',
-      borderRadius: 16, padding: 20, border: '1px solid #bfdbfe'
+      background: darkMode
+        ? 'linear-gradient(135deg,#1e3a8a 0%,#1e293b 100%)'
+        : 'linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%)',
+      borderRadius: 20, padding: 24,
+      border: `1px solid ${darkMode?'#2d4a8a':'#bfdbfe'}`,
+      boxShadow: darkMode ? '0 4px 24px rgba(0,0,0,0.3)' : '0 4px 24px rgba(37,99,235,0.1)'
     }}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:16,gap:12}}>
         <div>
-          <div style={{fontWeight:800,fontSize:16,color:darkMode?'#f1f5f9':'#1e3a8a'}}>⭐ Programma Fedeltà</div>
-          <div style={{color:darkMode?'#94a3b8':'#3b82f6',fontSize:13,marginTop:2}}>100 punti per ogni ora di sosta</div>
+          <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4}}>
+            <span style={{fontSize:22}}>⭐</span>
+            <span style={{fontWeight:900,fontSize:18,color:darkMode?'#f1f5f9':'#1e3a8a'}}>Programma Fedeltà</span>
+          </div>
+          <div style={{color:darkMode?'#94a3b8':'#3b82f6',fontSize:13}}>100 punti per ogni ora · 10.000 = 1 ora gratis</div>
         </div>
-        <div style={{textAlign:'right'}}>
-          <div style={{fontWeight:900,fontSize:28,color:'#2563eb'}}>{points.toLocaleString()}</div>
-          <div style={{color:'var(--muted)',fontSize:12}}>punti accumulati</div>
+        <div style={{textAlign:'right',flexShrink:0}}>
+          <div style={{fontWeight:900,fontSize:32,color:'#2563eb',lineHeight:1}}>{points.toLocaleString()}</div>
+          <div style={{color:'var(--muted)',fontSize:12,marginTop:2}}>punti totali</div>
         </div>
       </div>
-      <div style={{background:darkMode?'#0f172a':'white',borderRadius:8,height:10,overflow:'hidden',marginBottom:8}}>
-        <div style={{height:'100%',background:'linear-gradient(90deg,#2563eb,#60a5fa)',width:`${pct}%`,transition:'width 1s ease',borderRadius:8}} />
+
+      <div style={{marginBottom:10}}>
+        <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:darkMode?'#94a3b8':'#64748b',marginBottom:6}}>
+          <span>{cyclePoints.toLocaleString()} / {POINTS_PER_REWARD.toLocaleString()} punti</span>
+          <span>{Math.round(pct)}% verso il prossimo premio</span>
+        </div>
+        <div style={{background:darkMode?'#0f172a':'rgba(255,255,255,0.7)',borderRadius:99,height:12,overflow:'hidden'}}>
+          <div style={{
+            height:'100%',
+            background: canRedeem ? 'linear-gradient(90deg,#16a34a,#4ade80)' : 'linear-gradient(90deg,#2563eb,#60a5fa)',
+            width:`${pct}%`, borderRadius:99, transition:'width 1s ease'
+          }} />
+        </div>
       </div>
-      <div style={{display:'flex',justifyContent:'space-between',fontSize:12,color:'var(--muted)'}}>
-        <span>{(points % 10000).toLocaleString()} / 10.000 punti</span>
-        <span>🎁 Prossimo premio: 1 ora gratis a {Math.floor(nextReward/100)} ore</span>
-      </div>
-      {points >= 10000 && (
-        <div style={{marginTop:12,padding:'10px 14px',background:'#dcfce7',borderRadius:10,color:'#166534',fontWeight:700,fontSize:14,textAlign:'center'}}>
-          🎉 Hai abbastanza punti per un'ora gratis!
+
+      {canRedeem ? (
+        <div style={{
+          marginTop:16,padding:'14px 18px',
+          background: darkMode ? 'rgba(22,163,74,0.2)' : '#f0fdf4',
+          border: `1px solid ${darkMode?'#166534':'#bbf7d0'}`,
+          borderRadius:14,display:'flex',alignItems:'center',
+          justifyContent:'space-between',gap:16,flexWrap:'wrap'
+        }}>
+          <div>
+            <div style={{fontWeight:800,fontSize:15,color:darkMode?'#4ade80':'#166534'}}>
+              🎉 {freeHoursAvailable} {freeHoursAvailable===1?'ora gratis disponibile':'ore gratis disponibili'}!
+            </div>
+            <div style={{fontSize:13,color:darkMode?'#86efac':'#15803d',marginTop:2}}>
+              Riscatta subito il tuo premio
+            </div>
+          </div>
+          <button onClick={handleRedeem} disabled={redeeming} style={{
+            padding:'10px 22px',borderRadius:12,border:'none',
+            background: redeeming ? '#6b7280' : 'linear-gradient(135deg,#16a34a,#15803d)',
+            color:'white',fontWeight:800,fontSize:14,
+            cursor: redeeming ? 'not-allowed' : 'pointer',
+            boxShadow:'0 2px 12px rgba(22,163,74,0.35)',
+            transition:'all 0.2s',whiteSpace:'nowrap',flexShrink:0
+          }}>
+            {redeeming ? '⏳ Riscatto…' : '🎁 Riscatta 1 ora gratis'}
+          </button>
+        </div>
+      ) : (
+        <div style={{
+          marginTop:12,padding:'10px 14px',
+          background: darkMode ? 'rgba(37,99,235,0.15)' : 'rgba(255,255,255,0.6)',
+          borderRadius:10,display:'flex',justifyContent:'space-between',
+          alignItems:'center',fontSize:13,color:darkMode?'#93c5fd':'#2563eb'
+        }}>
+          <span>🎁 Prossimo premio tra</span>
+          <strong>{(POINTS_PER_REWARD - cyclePoints).toLocaleString()} punti</strong>
         </div>
       )}
     </div>
@@ -928,6 +988,12 @@ export default function UserPage({ initialUser, onLogout }) {
     } catch { showNotif('❌ Errore di rete', 'error') }
   }
 
+  function handleRedeemLoyalty() {
+    if (loyaltyPoints < 10000) return
+    setLoyaltyPoints(p => p - 10000)
+    showNotif('🎁 1 ora gratis riscattata! Verrà applicata alla prossima prenotazione.')
+  }
+
   function handleDownloadPDF(booking) {
     generateBookingPDF(booking, user).catch(() => showNotif('Errore nel PDF', 'error'))
   }
@@ -987,7 +1053,6 @@ export default function UserPage({ initialUser, onLogout }) {
             { id: 'location', icon: '📍', label: 'Dove siamo', count: null },
             { id: 'bookings', icon: '📋', label: 'Le mie prenotazioni', count: activeBookings.length },
             { id: 'stats', icon: '📊', label: 'Statistiche visite', count: null },
-            { id: 'maintenance', icon: '🔧', label: 'Manutenzione', count: null },
           ].map(tab => (
             <button key={tab.id} type="button"
               className={`user-nav-btn ${activeView === tab.id ? 'active' : ''}`}
@@ -1060,16 +1125,14 @@ export default function UserPage({ initialUser, onLogout }) {
                   : activeView === 'map' ? 'Mappa parcheggio'
                   : activeView === 'location' ? 'Dove siamo'
                   : activeView === 'bookings' ? 'Le mie prenotazioni'
-                  : activeView === 'stats' ? 'Statistiche visite'
-                  : 'Turni Manutenzione'}
+                  : 'Statistiche visite'}
               </h2>
               <p className="muted-text">
                 {activeView === 'spots' ? `${availableSpots.length} posti liberi · Clicca per prenotare`
                   : activeView === 'map' ? 'Clicca un posto libero per prenotarlo'
                   : activeView === 'location' ? 'Parcheggio Piazza Vittoria'
                   : activeView === 'bookings' ? `${activeBookings.length} attive · ${pastBookings.length} concluse`
-                  : activeView === 'stats' ? 'Analisi frequenza prenotazioni'
-                  : 'Calendario interventi programmati'}
+                  : 'Analisi frequenza prenotazioni'}
               </p>
             </div>
             {activeView === 'spots' && (
@@ -1176,7 +1239,7 @@ export default function UserPage({ initialUser, onLogout }) {
           {/* Vista prenotazioni */}
           {activeView === 'bookings' && (
             <>
-              <LoyaltyWidget points={loyaltyPoints} darkMode={dm} />
+              <LoyaltyWidget points={loyaltyPoints} onRedeem={handleRedeemLoyalty} darkMode={dm} />
 
               {activeBookings.length > 0 && (
                 <section className="panel" style={{background:dm?'#1e293b':'white'}}>
@@ -1223,12 +1286,6 @@ export default function UserPage({ initialUser, onLogout }) {
             </section>
           )}
 
-          {/* Manutenzione */}
-          {activeView === 'maintenance' && (
-            <section className="panel" style={{background:dm?'#1e293b':'white'}}>
-              <MaintenanceSchedule darkMode={dm} />
-            </section>
-          )}
         </div>
       </main>
 

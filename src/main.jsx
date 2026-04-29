@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 import UserPage from './pages/UserPage.jsx'
 import LoginPage from './pages/LoginPage.jsx'
-import { API_BASE as API } from './services/api.js'
 
 function Root() {
   const [user, setUser] = useState(null)
