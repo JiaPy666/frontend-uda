@@ -5,6 +5,7 @@ import ParkingMapView from './components/ParkingMapView'
 import AdminActions from './components/AdminActions'
 import { API_BASE } from './services/api'
 import { updateSpot } from './services/api.js'
+import MaintenancePage from './pages/MaintenancePage'
 
 
 function formatStato(spot) {
@@ -364,105 +365,127 @@ function App({ user, onLogout }) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <h1 className="sidebar-title">🅿 Admin</h1>
-        <p className="sidebar-subtitle">
-          Dashboard per controllare i posti, modificarli e visualizzare la disposizione del parcheggio.
-        </p>
+        {/* Logo */}
+        <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:6}}>
+          <div style={{width:36,height:36,borderRadius:10,background:'#2563eb',display:'flex',alignItems:'center',justifyContent:'center',fontSize:18,flexShrink:0}}>🅿</div>
+          <div>
+            <div style={{fontWeight:900,fontSize:16,color:'white'}}>ParkAdmin</div>
+            <div style={{fontSize:11,color:'rgba(255,255,255,0.45)'}}>Pannello di controllo</div>
+          </div>
+        </div>
+
+        <div style={{height:1,background:'rgba(255,255,255,0.1)',margin:'16px 0'}} />
 
         {/* Profilo admin */}
         {user && (
-          <div className="user-profile-box" style={{ marginBottom: 20 }}>
+          <div className="user-profile-box" style={{marginBottom:20}}>
             <div className="user-avatar">{user.name ? user.name.charAt(0).toUpperCase() : 'A'}</div>
-            <div style={{ minWidth: 0 }}>
-              <div style={{ fontWeight: 700, fontSize: 14, color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</div>
-              <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: 12 }}>{user.role === 'admin' ? '🔑 Amministratore' : user.email}</div>
+            <div style={{minWidth:0}}>
+              <div style={{fontWeight:700,fontSize:14,color:'white',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{user.name}</div>
+              <div style={{color:'rgba(255,255,255,0.55)',fontSize:12}}>{user.role==='admin'?'🔑 Amministratore':user.email}</div>
             </div>
           </div>
         )}
 
+        {/* Navigazione principale */}
         <div className="sidebar-section">
-          <label className="sidebar-label">Cerca posto</label>
-          <div className="search-row" style={{ gridTemplateColumns: '1fr' }}>
-            <input
-              type="text"
-              placeholder="Es. A001, B, electric..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="sidebar-section">
-          <label className="sidebar-label">Stato</label>
-          <select
-            className="filter-control"
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value)}
-          >
-            <option value="all">Tutti</option>
-            <option value="free">Liberi</option>
-            <option value="occupied">Occupati</option>
-            <option value="maintenance">Manutenzione</option>
-          </select>
-        </div>
-
-        <div className="sidebar-section">
-          <label className="sidebar-label">Tipo posto</label>
-          <select
-            className="filter-control"
-            value={typeFilter}
-            onChange={(event) => setTypeFilter(event.target.value)}
-          >
-            <option value="all">Tutti</option>
-            <option value="normal">Normale</option>
-            <option value="disabled">Disabili</option>
-            <option value="electric">Elettrico</option>
-            <option value="motorcycle">Moto</option>
-            <option value="van">Furgone</option>
-          </select>
-        </div>
-
-        <div className="sidebar-section">
-          <label className="sidebar-label">Zona filtro</label>
-          <select
-            className="filter-control"
-            value={zoneFilter}
-            onChange={(event) => setZoneFilter(event.target.value)}
-          >
-            <option value="all">Tutte</option>
-            <option value="A">Zona A</option>
-            <option value="B">Zona B</option>
-            <option value="C">Zona C</option>
-            <option value="D">Zona D</option>
-          </select>
-        </div>
-
-        <div className="sidebar-section">
-          <label className="sidebar-label">Accesso rapido zone</label>
-          <div className="zone-tabs">
-            {['A', 'B', 'C', 'D'].map((zone) => (
-              <button
-                key={zone}
-                type="button"
-                className={`zone-tab ${focusedZone === zone ? 'active' : ''}`}
-                onClick={() => handleZoneSelect(zone)}
-              >
-                Zona {zone}
+          <span style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.4)',letterSpacing:'0.1em'}}>NAVIGAZIONE</span>
+          <div style={{marginTop:8,display:'flex',flexDirection:'column',gap:4}}>
+            {[
+              {id:'dashboard', icon:'📊', label:'Dashboard'},
+              {id:'maintenance', icon:'🔧', label:'Manutenzione', badge: spots.filter(s=>s.maintenance).length || null},
+            ].map(item => (
+              <button key={item.id} type="button"
+                onClick={() => setAdminView(item.id)}
+                style={{
+                  display:'flex',alignItems:'center',justifyContent:'space-between',
+                  width:'100%',padding:'10px 14px',borderRadius:12,
+                  background: adminView===item.id ? 'rgba(255,255,255,0.15)' : 'transparent',
+                  border: adminView===item.id ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
+                  color: adminView===item.id ? 'white' : 'rgba(255,255,255,0.65)',
+                  fontWeight: adminView===item.id ? 700 : 500,
+                  fontSize:14,textAlign:'left',cursor:'pointer',transition:'all 0.15s'
+                }}>
+                <span style={{display:'flex',alignItems:'center',gap:9}}>
+                  <span style={{fontSize:15}}>{item.icon}</span>{item.label}
+                </span>
+                {item.badge ? (
+                  <span style={{background:'#ef4444',color:'white',padding:'1px 7px',borderRadius:99,fontSize:11,fontWeight:700}}>
+                    {item.badge}
+                  </span>
+                ) : null}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="sidebar-section">
-          <button type="button" className="btn-secondary" onClick={handleResetFilters}>
-            Reimposta filtri
-          </button>
-        </div>
+        {/* Filtri — solo in dashboard */}
+        {adminView === 'dashboard' && (<>
+          <div className="sidebar-section">
+            <label className="sidebar-label">Cerca posto</label>
+            <div className="search-row" style={{gridTemplateColumns:'1fr'}}>
+              <input type="text" placeholder="Es. A001, B, electric..."
+                value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="sidebar-section">
+            <label className="sidebar-label">Stato</label>
+            <select className="filter-control" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="all">Tutti</option>
+              <option value="free">Liberi</option>
+              <option value="occupied">Occupati</option>
+              <option value="maintenance">Manutenzione</option>
+            </select>
+          </div>
+
+          <div className="sidebar-section">
+            <label className="sidebar-label">Tipo posto</label>
+            <select className="filter-control" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+              <option value="all">Tutti</option>
+              <option value="normal">Normale</option>
+              <option value="disabled">Disabili</option>
+              <option value="electric">Elettrico</option>
+              <option value="motorcycle">Moto</option>
+              <option value="van">Furgone</option>
+            </select>
+          </div>
+
+          <div className="sidebar-section">
+            <label className="sidebar-label">Zona filtro</label>
+            <select className="filter-control" value={zoneFilter} onChange={(e) => setZoneFilter(e.target.value)}>
+              <option value="all">Tutte</option>
+              <option value="A">Zona A</option>
+              <option value="B">Zona B</option>
+              <option value="C">Zona C</option>
+              <option value="D">Zona D</option>
+            </select>
+          </div>
+
+          <div className="sidebar-section">
+            <label className="sidebar-label">Accesso rapido zone</label>
+            <div className="zone-tabs">
+              {['A','B','C','D'].map((zone) => (
+                <button key={zone} type="button"
+                  className={`zone-tab ${focusedZone===zone?'active':''}`}
+                  onClick={() => handleZoneSelect(zone)}>
+                  Zona {zone}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="sidebar-section">
+            <button type="button" className="btn-secondary" onClick={handleResetFilters}>
+              Reimposta filtri
+            </button>
+          </div>
+        </>)}
 
         {/* Logout */}
         {onLogout && (
-          <div className="sidebar-section" style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-            <button type="button" className="btn-danger" style={{ width: '100%' }} onClick={onLogout}>
+          <div className="sidebar-section" style={{marginTop:'auto',paddingTop:16,borderTop:'1px solid rgba(255,255,255,0.1)'}}>
+            <button type="button" className="btn-danger" style={{width:'100%'}} onClick={onLogout}>
               🚪 Esci dall'account
             </button>
           </div>
@@ -489,6 +512,11 @@ function App({ user, onLogout }) {
                 className={`view-toggle-btn ${adminView === 'bookings' ? 'active' : ''}`}
                 onClick={() => setAdminView('bookings')}>
                 📋 Prenotazioni
+              </button>
+              <button type="button"
+                className={`view-toggle-btn ${adminView === 'maintenance' ? 'active' : ''}`}
+                onClick={() => setAdminView('maintenance')}>
+                🔧 Manutenzione
               </button>
               {adminView === 'dashboard' && (<>
                 <button type="button"
@@ -697,6 +725,11 @@ function App({ user, onLogout }) {
             </div>
           </section>
           </>)}
+
+          {/* ── SEZIONE MANUTENZIONE ADMIN ── */}
+          {adminView === 'maintenance' && (
+            <MaintenancePage />
+          )}
 
           {/* ── SEZIONE PRENOTAZIONI ADMIN ── */}
           {adminView === 'bookings' && (<>
