@@ -14,6 +14,7 @@ import ZoneSummaryCards from '../components/ZoneSummaryCards'
 import AdminActions from '../components/AdminActions'
 import { API_BASE } from '../services/api'
 import MaintenancePage from './MaintenancePage'
+import FaultReportsPage from './FaultReportsPage'
 
 const API_URL = `${API_BASE}/spots`
 
@@ -101,6 +102,7 @@ function DashboardPage() {
       free: spots.filter((s) => s.status === 'free' && !s.maintenance).length,
       occupied: spots.filter((s) => s.status === 'occupied').length,
       maintenance: spots.filter((s) => s.maintenance).length,
+      openFaults: spots.filter((s) => s.fault_report && s.fault_report !== '').length,
     }
   }, [spots])
 
@@ -215,6 +217,8 @@ function DashboardPage() {
         <main className="main-content">
           {adminView === 'maintenance' ? (
             <MaintenancePage />
+          ) : adminView === 'faults' ? (
+            <FaultReportsPage />
           ) : (
           <>
           <Header onResetFilters={handleResetFilters} />

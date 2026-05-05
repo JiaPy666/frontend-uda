@@ -400,9 +400,8 @@ function FaultReportModal({ spot, onClose, onSubmit }) {
   const [selected, setSelected] = useState('')
 
   function handleSubmit() {
-    const msg = selected ? `${selected}: ${report}` : report
-    if (!msg.trim()) return
-    onSubmit(spot.id, msg)
+    if (!selected) return
+    onSubmit(spot.id, selected, report)
     onClose()
   }
 
@@ -546,73 +545,41 @@ function LoyaltyWidget({ points, onRedeem, darkMode }) {
   )
 }
 
-// ─── Booking Modal (con coupon e fix orario) ───────────────────────────────────
+// ─── Booking Modal ───────────────────────────────────────────────────────────
 
-function BookingModal({ spot, user, onClose, onConfirm, darkMode }) {
-  // FIX: il tempo di partenza parte dall'ora corrente ma può essere nel futuro
+function BookingModal({ spot, user, freeHours, onClose, onConfirm, darkMode }) {
   const now = new Date()
-  const defaultStart = new Date(now)
-  const defaultEnd = new Date(now.getTime() + 2 * 3600000)
   const fmt = d => d.toISOString().slice(0, 16)
-  const fmtMin = d => d.toISOString().slice(0, 16)
+  const [startTime, setStartTime] = useState(fmt(now))
+  const [endTime,   setEndTime]   = useState(fmt(new Date(now.getTime() + 2 * 3600000)))
+  const [useFreeHour, setUseFreeHour] = useState(false)
 
-  const [startTime, setStartTime] = useState(fmt(defaultStart))
-  const [endTime, setEndTime] = useState(fmt(defaultEnd))
-  const [couponCode, setCouponCode] = useState('')
-  const [couponResult, setCouponResult] = useState(null)
-  const [couponLoading, setCouponLoading] = useState(false)
-
-  // Aggiorna fine automaticamente se inizio cambia e fine precede inizio
   function handleStartChange(val) {
     setStartTime(val)
-    if (new Date(val) >= new Date(endTime)) {
-      const newEnd = new Date(new Date(val).getTime() + 2 * 3600000)
-      setEndTime(fmt(newEnd))
-    }
+    if (new Date(val) >= new Date(endTime))
+      setEndTime(fmt(new Date(new Date(val).getTime() + 2 * 3600000)))
   }
 
-  const rawDuration = Math.max(0, (new Date(endTime) - new Date(startTime)) / 3600000)
-  const duration = rawDuration.toFixed(1)
-  const baseTotal = rawDuration * spot.cost
-  const discount = couponResult?.valid ? baseTotal * (couponResult.discount_pct / 100) : 0
-  const total = Math.max(0, baseTotal - discount).toFixed(2)
+  const rawDuration  = Math.max(0, (new Date(endTime) - new Date(startTime)) / 3600000)
+  const billableHrs  = useFreeHour ? Math.max(0, rawDuration - 1) : rawDuration
+  const total        = (billableHrs * spot.cost).toFixed(2)
+  const savings      = useFreeHour ? spot.cost.toFixed(2) : null
+  const canUseFree   = freeHours && freeHours.length > 0
 
-  async function validateCoupon() {
-    if (!couponCode.trim()) return
-    setCouponLoading(true)
-    try {
-      const res = await fetch(`${API}/coupons/validate`, {
-        method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ code: couponCode })
-      })
-      const data = await res.json()
-      setCouponResult(data)
-    } catch {
-      setCouponResult({ valid: false, error: 'Errore di connessione' })
-    }
-    setCouponLoading(false)
-  }
+  // CO2
+  const floor = { A:1, B:2, C:3, D:4 }[spot.zone] || 1
 
   function handleConfirm() {
-    const booking = {
-      spotId: spot.id,
-      zone: spot.zone,
-      type: spot.parking_type,
-      cost: spot.cost,
-      startTimeRaw: startTime,
-      endTimeRaw: endTime,
-      duration: parseFloat(duration),
-      coupon: couponResult?.valid ? couponCode : null,
-      discountedTotal: parseFloat(total)
-    }
-    onConfirm(booking)
+    onConfirm({
+      spotId: spot.id, zone: spot.zone,
+      type: spot.parking_type, cost: spot.cost,
+      startTimeRaw: startTime, endTimeRaw: endTime,
+      duration: parseFloat(rawDuration.toFixed(1)),
+      discountedTotal: parseFloat(total),
+      freeHourRewardId: useFreeHour && canUseFree ? freeHours[0].id : null
+    })
     onClose()
   }
-
-  // CO2 risparmio in base al piano (simula floor_level come zona)
-  const zoneToFloor = { A: 1, B: 2, C: 3, D: 4 }
-  const floor = zoneToFloor[spot.zone] || 1
-  const co2 = co2Saved(floor)
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -626,51 +593,46 @@ function BookingModal({ spot, user, onClose, onConfirm, darkMode }) {
         </div>
 
         {/* CO2 badge */}
-        {floor === 1 && (
+        {floor === 1 ? (
           <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 16px',background:'#f0fdf4',borderRadius:12,marginBottom:16,border:'1px solid #bbf7d0'}}>
             <span style={{fontSize:22}}>🌿</span>
-            <div style={{flex:1}}>
-              <div style={{fontWeight:700,fontSize:13,color:'#166534'}}>Scelta eco-sostenibile!</div>
-              <div style={{color:'#15803d',fontSize:12}}>
-                Parcheggiando in Zona A (livello più vicino all'uscita), hai risparmiato <strong>15g di CO₂</strong> rispetto alla Zona D
-              </div>
+            <div style={{fontSize:13,color:'#166534'}}>
+              <strong>Scelta eco!</strong> Zona A — hai risparmiato <strong>15g di CO₂</strong> rispetto alla Zona D
             </div>
           </div>
-        )}
-        {floor > 1 && (
+        ) : (
           <div style={{display:'flex',alignItems:'center',gap:10,padding:'10px 16px',background:'#fffbeb',borderRadius:12,marginBottom:16,border:'1px solid #fde68a'}}>
-            <span style={{fontSize:22}}>🍃</span>
+            <span style={{fontSize:20}}>🍃</span>
             <div style={{fontSize:12,color:'#92400e'}}>
-              Considera la <strong>Zona A</strong> — risparmieresti <strong>{co2}g di CO₂</strong> camminando meno verso l'uscita!
+              La <strong>Zona A</strong> risparmierebbe <strong>{(floor-1)*5}g di CO₂</strong>
             </div>
           </div>
         )}
 
         {/* Spot preview */}
         <div className="booking-spot-preview">
-          <span style={{ fontSize: 32 }}>{getVehicleIcon(spot.parking_type)}</span>
+          <span style={{fontSize:32}}>{getVehicleIcon(spot.parking_type)}</span>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 18 }}>{spot.id}</div>
+            <div style={{fontWeight:800,fontSize:18}}>{spot.id}</div>
             <div className="muted-text">Zona {spot.zone} · {formatType(spot.parking_type)}</div>
           </div>
-          <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
-            <div style={{ fontWeight: 800, fontSize: 22, color: 'var(--primary)' }}>€{spot.cost}</div>
-            <div className="muted-text" style={{ fontSize: 12 }}>al ora</div>
+          <div style={{marginLeft:'auto',textAlign:'right'}}>
+            <div style={{fontWeight:800,fontSize:22,color:'var(--primary)'}}>€{spot.cost}</div>
+            <div className="muted-text" style={{fontSize:12}}>/ora</div>
           </div>
         </div>
 
+        {/* Date */}
         <div className="modal-grid">
           <label>
             <span className="modal-label">Inizio prenotazione</span>
             <input type="datetime-local" value={startTime}
-              onChange={e => handleStartChange(e.target.value)}
-              min={fmtMin(now)} />
+              onChange={e => handleStartChange(e.target.value)} min={fmt(now)} />
           </label>
           <label>
             <span className="modal-label">Fine prenotazione</span>
             <input type="datetime-local" value={endTime}
-              onChange={e => setEndTime(e.target.value)}
-              min={startTime} />
+              onChange={e => setEndTime(e.target.value)} min={startTime} />
           </label>
           <label>
             <span className="modal-label">Intestatario</span>
@@ -682,49 +644,60 @@ function BookingModal({ spot, user, onClose, onConfirm, darkMode }) {
           </label>
         </div>
 
-        {/* Coupon */}
-        <div style={{marginTop:16}}>
-          <span className="modal-label">Codice promozionale</span>
-          <div style={{display:'flex',gap:10,marginTop:6}}>
-            <input
-              type="text"
-              placeholder="Es. PARK10"
-              value={couponCode}
-              onChange={e => { setCouponCode(e.target.value.toUpperCase()); setCouponResult(null) }}
-              style={{flex:1,padding:'10px 14px',borderRadius:10,border:`1px solid ${couponResult?.valid?'#22c55e':couponResult?.valid===false?'#ef4444':'var(--border-color)'}`,fontSize:14}}
-            />
-            <button onClick={validateCoupon} disabled={couponLoading || !couponCode.trim()}
-              style={{padding:'10px 18px',borderRadius:10,border:'none',background:'#2563eb',color:'white',fontWeight:700,cursor:'pointer',fontSize:14,opacity:!couponCode.trim()?0.5:1}}>
-              {couponLoading ? '…' : 'Applica'}
-            </button>
+        {/* Ora gratis */}
+        {canUseFree && (
+          <div
+            onClick={() => setUseFreeHour(v => !v)}
+            style={{
+              marginTop:16, padding:'14px 18px', borderRadius:14, cursor:'pointer',
+              background: useFreeHour ? '#f0fdf4' : '#f8fafc',
+              border: `2px solid ${useFreeHour ? '#22c55e' : '#e2e8f0'}`,
+              display:'flex', alignItems:'center', gap:14, transition:'all 0.2s'
+            }}>
+            <div style={{
+              width:22, height:22, borderRadius:6, border:'2px solid',
+              borderColor: useFreeHour ? '#22c55e' : '#cbd5e1',
+              background: useFreeHour ? '#22c55e' : 'transparent',
+              display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0
+            }}>
+              {useFreeHour && <span style={{color:'white',fontSize:13,fontWeight:900}}>✓</span>}
+            </div>
+            <div style={{flex:1}}>
+              <div style={{fontWeight:700,fontSize:14,color: useFreeHour ? '#166534' : '#0f172a'}}>
+                🎁 Usa 1 ora gratis ({freeHours.length} disponibili)
+              </div>
+              <div style={{fontSize:12,color:'#64748b',marginTop:2}}>
+                La prima ora non verrà addebitata — riscattata con i tuoi punti fedeltà
+              </div>
+            </div>
+            {useFreeHour && rawDuration >= 1 && (
+              <div style={{textAlign:'right',flexShrink:0}}>
+                <div style={{color:'#22c55e',fontWeight:800,fontSize:14}}>-€{savings}</div>
+                <div style={{fontSize:11,color:'#64748b'}}>sconto</div>
+              </div>
+            )}
           </div>
-          {couponResult?.valid && (
-            <div style={{marginTop:8,padding:'8px 14px',background:'#f0fdf4',borderRadius:8,color:'#166534',fontSize:13,fontWeight:600}}>
-              ✅ {couponResult.description} — Sconto {couponResult.discount_pct}% applicato!
-            </div>
-          )}
-          {couponResult?.valid === false && (
-            <div style={{marginTop:8,padding:'8px 14px',background:'#fef2f2',borderRadius:8,color:'#dc2626',fontSize:13}}>
-              ❌ {couponResult.error}
-            </div>
-          )}
-        </div>
+        )}
 
-        {/* Riepilogo costo */}
+        {/* Riepilogo */}
         <div className="booking-cost-summary">
-          <div className="booking-cost-row"><span>Durata</span><strong>{duration} ore</strong></div>
-          <div className="booking-cost-row"><span>Tariffa oraria</span><strong>€{spot.cost}/ora</strong></div>
-          {discount > 0 && (
+          <div className="booking-cost-row">
+            <span>Durata</span><strong>{rawDuration.toFixed(1)} ore</strong>
+          </div>
+          <div className="booking-cost-row">
+            <span>Tariffa</span><strong>€{spot.cost}/ora</strong>
+          </div>
+          {useFreeHour && rawDuration >= 1 && (
             <div className="booking-cost-row" style={{color:'#22c55e'}}>
-              <span>Sconto coupon ({couponResult.discount_pct}%)</span>
-              <strong>-€{discount.toFixed(2)}</strong>
+              <span>🎁 1 ora gratis</span><strong>-€{savings}</strong>
             </div>
           )}
           <div className="booking-cost-row booking-cost-total">
-            <span>Totale stimato</span>
-            <strong>€{total}</strong>
+            <span>Totale</span><strong>€{total}</strong>
           </div>
-          <div style={{fontSize:12,color:'#2563eb',marginTop:4}}>⭐ +{Math.floor(rawDuration * 100)} punti fedeltà</div>
+          <div style={{fontSize:12,color:'#2563eb',marginTop:4}}>
+            ⭐ +{Math.floor(rawDuration * 100)} punti fedeltà
+          </div>
         </div>
 
         <div className="modal-actions">
@@ -854,6 +827,7 @@ export default function UserPage({ initialUser, onLogout }) {
   const [bookings, setBookings] = useState([])
   const [user, setUser] = useState(initialUser || { id: null, name: '', email: '', phone: '', plate: '' })
   const [loyaltyPoints, setLoyaltyPoints] = useState(0)
+  const [freeHours, setFreeHours] = useState([]) // ore gratis disponibili
 
   const [searchTerm, setSearchTerm] = useState('')
   const [typeFilter, setTypeFilter] = useState('all')
@@ -882,7 +856,18 @@ export default function UserPage({ initialUser, onLogout }) {
   useEffect(() => {
     if (!user?.id) return
     fetch(`${API}/bookings?user_id=${user.id}`).then(r => r.json()).then(data => setBookings(Array.isArray(data) ? data : [])).catch(() => {})
-    fetch(`${API}/users/${user.id}/loyalty`).then(r => r.json()).then(d => setLoyaltyPoints(d.loyalty_points || 0)).catch(() => {})
+    fetch(`${API}/users/${user.id}/loyalty`)
+      .then(r => r.json())
+      .then(d => {
+        setLoyaltyPoints(d.loyalty_points || 0)
+        // free_hours_available is a count — load the actual reward objects separately
+      }).catch(() => {})
+    fetch(`${API}/users/${user.id}/loyalty/rewards`)
+      .then(r => r.json())
+      .then(data => {
+        const available = Array.isArray(data) ? data.filter(r => r.status === 'available') : []
+        setFreeHours(available)
+      }).catch(() => setFreeHours([]))
   }, [user?.id])
 
   function showNotif(msg, type = 'success') {
@@ -925,18 +910,27 @@ export default function UserPage({ initialUser, onLogout }) {
         body: JSON.stringify({
           user_id: user.id, spot_id: booking.spotId,
           start_time: booking.startTimeRaw, end_time: booking.endTimeRaw,
-          duration_hours: booking.duration, total_cost: booking.discountedTotal ?? (booking.cost * booking.duration),
+          duration_hours: booking.duration,
+          total_cost: booking.discountedTotal ?? (booking.cost * booking.duration),
+          use_free_hour: booking.freeHourRewardId ? true : false,
+          reward_id: booking.freeHourRewardId || null
         })
       })
       const data = await res.json()
       if (!res.ok) { showNotif('❌ ' + (data.error || 'Errore prenotazione'), 'error'); return }
-      if (data.loyalty_points_earned) setLoyaltyPoints(p => p + data.loyalty_points_earned)
-      const [bookingsRes, spotsRes] = await Promise.all([
+      setLoyaltyPoints(p => p + (data.loyalty_points_earned || 0))
+      // Ricarica ore gratis (potrebbero essere cambiate)
+      fetch(`${API}/users/${user.id}/loyalty`).then(r=>r.json()).then(d=>{
+        // loyalty_points updated after booking
+      })
+      const [bookingsRes, spotsRes, rewardsRes] = await Promise.all([
         fetch(`${API}/bookings?user_id=${user.id}`).then(r => r.json()),
         fetch(`${API}/spots`).then(r => r.json()),
+        fetch(`${API}/users/${user.id}/loyalty/rewards`).then(r => r.json()),
       ])
       setBookings(Array.isArray(bookingsRes) ? bookingsRes : [])
       setSpots(Array.isArray(spotsRes) ? spotsRes : [])
+      setFreeHours(Array.isArray(rewardsRes) ? rewardsRes.filter(r => r.status === 'available') : [])
       showNotif(`✅ Prenotazione confermata! Codice: ${data.booking_code} · +${data.loyalty_points_earned} punti fedeltà`)
     } catch { showNotif('❌ Errore di rete', 'error') }
   }
@@ -947,12 +941,14 @@ export default function UserPage({ initialUser, onLogout }) {
       const res = await fetch(`${API}/bookings/${bookingId}/cancel`, { method: 'POST' })
       const data = await res.json()
       if (!res.ok) { showNotif('❌ ' + (data.error || 'Errore'), 'error'); return }
-      const [bookingsRes, spotsRes] = await Promise.all([
+      const [bookingsRes, spotsRes, rewardsRes] = await Promise.all([
         fetch(`${API}/bookings?user_id=${user.id}`).then(r => r.json()),
         fetch(`${API}/spots`).then(r => r.json()),
+        fetch(`${API}/users/${user.id}/loyalty/rewards`).then(r => r.json()),
       ])
       setBookings(Array.isArray(bookingsRes) ? bookingsRes : [])
       setSpots(Array.isArray(spotsRes) ? spotsRes : [])
+      setFreeHours(Array.isArray(rewardsRes) ? rewardsRes.filter(r => r.status === 'available') : [])
       showNotif('🗑 Prenotazione cancellata')
     } catch { showNotif('❌ Errore di rete', 'error') }
   }
@@ -974,11 +970,11 @@ export default function UserPage({ initialUser, onLogout }) {
     } catch { showNotif('❌ Errore di rete', 'error') }
   }
 
-  async function handleFaultReport(spot, report) {
+  async function handleFaultReport(spot, reportType, description) {
     try {
       const res = await fetch(`${API}/spots/${spot.id}/fault`, {
         method: 'POST', headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ report })
+        body: JSON.stringify({ report_type: reportType, description, user_id: user.id })
       })
       const data = await res.json()
       if (!res.ok) { showNotif('❌ ' + (data.error || 'Errore'), 'error'); return }
@@ -988,10 +984,19 @@ export default function UserPage({ initialUser, onLogout }) {
     } catch { showNotif('❌ Errore di rete', 'error') }
   }
 
-  function handleRedeemLoyalty() {
+  async function handleRedeemLoyalty() {
     if (loyaltyPoints < 10000) return
-    setLoyaltyPoints(p => p - 10000)
-    showNotif('🎁 1 ora gratis riscattata! Verrà applicata alla prossima prenotazione.')
+    try {
+      const res = await fetch(`${API}/users/${user.id}/loyalty/redeem`, { method: 'POST' })
+      const data = await res.json()
+      if (!res.ok) { showNotif('❌ ' + (data.error || 'Errore'), 'error'); return }
+      setLoyaltyPoints(data.loyalty_points_remaining)
+      // Ricarica la lista reward dal DB
+      const rewardsRes = await fetch(`${API}/users/${user.id}/loyalty/rewards`).then(r => r.json())
+      const available = Array.isArray(rewardsRes) ? rewardsRes.filter(r => r.status === 'available') : []
+      setFreeHours(available)
+      showNotif(`🎁 Ora gratis salvata! Ora hai ${available.length} ${available.length === 1 ? 'ora gratis' : 'ore gratis'} — usala nel form di prenotazione.`)
+    } catch { showNotif('❌ Errore di rete', 'error') }
   }
 
   function handleDownloadPDF(booking) {
@@ -1104,6 +1109,7 @@ export default function UserPage({ initialUser, onLogout }) {
             { label: 'Posti liberi', value: spots.filter(s => s.status==='free'&&!s.maintenance).length, color: '#b9fbc0' },
             { label: 'Prenotazioni attive', value: activeBookings.length, color: '#93c5fd' },
             { label: 'Punti fedeltà', value: loyaltyPoints.toLocaleString(), color: '#fbbf24' },
+            { label: 'Ore gratis', value: freeHours.length, color: '#4ade80' },
           ].map(s => (
             <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
               <span style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12 }}>{s.label}</span>
@@ -1306,13 +1312,13 @@ export default function UserPage({ initialUser, onLogout }) {
       )}
 
       {bookingSpot && (
-        <BookingModal spot={bookingSpot} user={user} darkMode={dm}
+        <BookingModal spot={bookingSpot} user={user} freeHours={freeHours} darkMode={dm}
           onClose={() => setBookingSpot(null)} onConfirm={handleConfirmBooking} />
       )}
 
       {faultSpot && (
         <FaultReportModal spot={faultSpot} onClose={() => setFaultSpot(null)}
-          onSubmit={(spotId, report) => handleFaultReport({ id: spotId }, report)} />
+          onSubmit={(spotId, reportType, description) => handleFaultReport({ id: spotId }, reportType, description)} />
       )}
 
       {/* Toast */}

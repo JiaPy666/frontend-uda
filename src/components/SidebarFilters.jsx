@@ -37,9 +37,10 @@ function SidebarFilters({ filters, onFilterChange, onResetFilters, activeAdminVi
   }
 
   const navItems = [
-    { id: 'dashboard', icon: '📊', label: 'Dashboard', badge: null },
-    { id: 'map', icon: '🗺', label: 'Mappa parcheggio', badge: null },
-    { id: 'maintenance', icon: '🔧', label: 'Manutenzione', badge: spotStats?.maintenance || null },
+    { id: 'dashboard',   icon: '📊', label: 'Dashboard',          badge: null },
+    { id: 'map',         icon: '🗺', label: 'Mappa parcheggio',   badge: null },
+    { id: 'faults',      icon: '⚠️', label: 'Segnalazioni guasto', badge: spotStats?.openFaults || null },
+    { id: 'maintenance', icon: '🔧', label: 'Manutenzione',        badge: spotStats?.maintenance || null },
   ]
 
   return (

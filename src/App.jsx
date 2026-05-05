@@ -6,6 +6,7 @@ import AdminActions from './components/AdminActions'
 import { API_BASE } from './services/api'
 import { updateSpot } from './services/api.js'
 import MaintenancePage from './pages/MaintenancePage'
+import FaultReportsPage from './pages/FaultReportsPage'
 
 
 function formatStato(spot) {
@@ -392,8 +393,9 @@ function App({ user, onLogout }) {
           <span style={{fontSize:10,fontWeight:700,color:'rgba(255,255,255,0.4)',letterSpacing:'0.1em'}}>NAVIGAZIONE</span>
           <div style={{marginTop:8,display:'flex',flexDirection:'column',gap:4}}>
             {[
-              {id:'dashboard', icon:'📊', label:'Dashboard'},
-              {id:'maintenance', icon:'🔧', label:'Manutenzione', badge: spots.filter(s=>s.maintenance).length || null},
+              {id:'dashboard',   icon:'📊', label:'Dashboard'},
+              {id:'faults',      icon:'⚠️', label:'Segnalazioni guasto'},
+              {id:'maintenance', icon:'🔧', label:'Manutenzione'},
             ].map(item => (
               <button key={item.id} type="button"
                 onClick={() => setAdminView(item.id)}
@@ -725,6 +727,11 @@ function App({ user, onLogout }) {
             </div>
           </section>
           </>)}
+
+          {/* ── SEZIONE SEGNALAZIONI ADMIN ── */}
+          {adminView === 'faults' && (
+            <FaultReportsPage />
+          )}
 
           {/* ── SEZIONE MANUTENZIONE ADMIN ── */}
           {adminView === 'maintenance' && (

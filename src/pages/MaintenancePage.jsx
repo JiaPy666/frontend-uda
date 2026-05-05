@@ -71,14 +71,16 @@ function AddTurnModal({ onClose, onAdd }) {
   async function handleSave() {
     if (!form.date || !form.operator) return
     setSaving(true)
-    await new Promise(r => setTimeout(r, 400))
-    onAdd({
-      id: Date.now(),
-      ...form,
-      date: new Date(form.date).toLocaleDateString('it-IT'),
-      date_iso: form.date,
-      status: 'programmato'
-    })
+    try {
+      const res = await fetch(`${API}/maintenance/schedule`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ ...form, date_iso: form.date })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        onAdd({ id: data.id, ...form, date: data.date, date_iso: form.date, status: 'programmato' })
+      }
+    } catch {}
     setSaving(false)
     onClose()
   }
@@ -214,19 +216,34 @@ export default function MaintenancePage() {
     setTimeout(() => setNotification(null), 4000)
   }
 
-  function handleAdd(entry) {
-    setSchedule(prev => [entry, ...prev])
-    showNotif('✅ Turno aggiunto con successo!')
+  async function handleAdd(entry) {
+    try {
+      const res = await fetch(`${API}/maintenance/schedule`, {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(entry)
+      })
+      const data = await res.json()
+      if (!res.ok) { showNotif('❌ ' + (data.error||'Errore'), 'error'); return }
+      // Reload from DB
+      const fresh = await fetch(`${API}/maintenance/schedule`).then(r => r.json())
+      setSchedule(Array.isArray(fresh) ? fresh : [])
+      showNotif('✅ Turno aggiunto e salvato!')
+    } catch { showNotif('❌ Errore di rete', 'error') }
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!confirm('Rimuovere questo turno?')) return
+    await fetch(`${API}/maintenance/schedule/${id}`, { method: 'DELETE' }).catch(()=>{})
     setSchedule(prev => prev.filter(s => s.id !== id))
     showNotif('🗑 Turno rimosso')
   }
 
-  function handleStatusChange(id, newStatus) {
+  async function handleStatusChange(id, newStatus) {
     setSchedule(prev => prev.map(s => s.id === id ? {...s, status: newStatus} : s))
+    await fetch(`${API}/maintenance/schedule/${id}`, {
+      method: 'PUT', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ status: newStatus })
+    }).catch(()=>{})
   }
 
   const filtered = schedule.filter(s => {
