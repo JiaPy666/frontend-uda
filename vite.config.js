@@ -4,16 +4,6 @@ import babel from '@rolldown/plugin-babel'
 import fs from 'fs'
 import path from 'path'
 
-// =============================================================
-//  Modalità HTTPS / HTTP selezionabile via variabile d'ambiente
-//
-//  Avvio HTTP:   npm run dev
-//  Avvio HTTPS:  npm run dev:https
-//
-//  Certificati in: certs/localhost.pem · certs/localhost-key.pem
-//  IP coperti:     localhost · 127.0.0.1 · 10.4.54.22
-// =============================================================
-
 const useHttps = process.env.VITE_HTTPS === 'true'
 
 let httpsConfig = false

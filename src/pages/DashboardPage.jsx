@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState } from 'react'
 import Header from '../components/Header'
 import SidebarFilters from '../components/SidebarFilters'
 import StatsCards from '../components/StatsCards'
@@ -11,12 +11,9 @@ import SpotModal from '../components/SpotModal'
 import ViewToggle from '../components/ViewToggle'
 import ParkingMapView from '../components/ParkingMapView'
 import ZoneSummaryCards from '../components/ZoneSummaryCards'
-import AdminActions from '../components/AdminActions'
 import { API_BASE } from '../services/api'
 import MaintenancePage from './MaintenancePage'
 import FaultReportsPage from './FaultReportsPage'
-
-const API_URL = `${API_BASE}/spots`
 
 function DashboardPage() {
   const [spots, setSpots] = useState([])
@@ -33,26 +30,6 @@ function DashboardPage() {
     vehicleType: '',
     maintenance: '',
   })
-
-  // 1. Caricamento dati iniziale dal database (via Flask)
-  useEffect(() => {
-    fetchSpots()
-  }, [])
-
-  const fetchSpots = async () => {
-    setLoading(true)
-    try {
-      const response = await fetch(API_URL)
-      if (!response.ok) throw new Error('Errore nel caricamento dati')
-      const data = await response.json()
-      setSpots(data)
-    } catch (error) {
-      console.error("Errore API:", error)
-      alert("Impossibile connettersi al database. Assicurati che Flask sia attivo.")
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const activeZone = filters.zone && filters.zone !== 'all' ? filters.zone : selectedZone
 
@@ -174,28 +151,6 @@ function DashboardPage() {
     setCurrentView(view)
   }
 
-  // Funzioni Admin (ora rinfrescano i dati dal server dopo le operazioni)
-  function handleExportJson() {
-    const dataStr = JSON.stringify(spots, null, 2)
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
-    const linkElement = document.createElement('a')
-    linkElement.setAttribute('href', dataUri)
-    linkElement.setAttribute('download', 'parking_dataset.json')
-    linkElement.click()
-  }
-
-  function handleImportJson(newSpots) {
-    alert("Funzione di import di massa non ancora collegata al DB. Usa il modal per modifiche singole.")
-  }
-
-  function handleResetDataset() {
-    fetchSpots() // Ricarica i dati originali dal DB
-  }
-
-  function handleSimulateOccupancy() {
-    alert("Simulazione lato server non implementata. Modifica un posto manualmente.")
-  }
-
   if (loading && spots.length === 0) {
     return <div style={{padding: '2rem', textAlign: 'center'}}>Caricamento dati dal database...</div>
   }
@@ -273,13 +228,6 @@ function DashboardPage() {
               selectedZone={activeZone}
               selectedSpot={selectedSpot}
               onSelectSpot={handleSelectSpot}
-            />
-
-            <AdminActions
-              onExportJson={handleExportJson}
-              onImportJson={handleImportJson}
-              onResetDataset={handleResetDataset}
-              onSimulateOccupancy={handleSimulateOccupancy}
             />
           </div>
           </>

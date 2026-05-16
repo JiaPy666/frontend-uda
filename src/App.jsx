@@ -1,8 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import './App.css'
-import mockSpots from './data/mockSpots'
 import ParkingMapView from './components/ParkingMapView'
-import AdminActions from './components/AdminActions'
 import { API_BASE } from './services/api'
 import { updateSpot } from './services/api.js'
 import MaintenancePage from './pages/MaintenancePage'
@@ -41,10 +39,6 @@ function getVehicleIcon(spot) {
   return '🚗'
 }
 
-function getCurrentDateTime() {
-  const now = new Date()
-  return now.toLocaleString('it-IT')
-}
 
 function App({ user, onLogout }) {
   const [spots, setSpots] = useState([])
@@ -281,88 +275,6 @@ function App({ user, onLogout }) {
     setTimeout(() => setAdminNotif(null), 4000)
   }
 
-  function handleExportJson() {
-    const jsonString = JSON.stringify(spots, null, 2)
-    const blob = new Blob([jsonString], { type: 'application/json' })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-
-    link.href = url
-    link.download = 'parking-spots.json'
-    link.click()
-
-    window.URL.revokeObjectURL(url)
-  }
-
-  function handleImportJson(parsedData) {
-    if (!Array.isArray(parsedData)) {
-      alert('Il file deve contenere un array JSON di posti.')
-      return
-    }
-
-    setSpots(parsedData)
-    setSelectedSpot(null)
-    setEditSpot(null)
-    setFocusedZone('A')
-    setViewMode('overview')
-    setSearchTerm('')
-    setStatusFilter('all')
-    setTypeFilter('all')
-    setZoneFilter('all')
-
-    alert('Importazione completata.')
-  }
-
-  function handleResetDataset() {
-    const confirmReset = window.confirm('Vuoi davvero ripristinare il dataset iniziale del parcheggio?')
-    if (!confirmReset) return
-
-    setSpots(mockSpots)
-    setSelectedSpot(null)
-    setEditSpot(null)
-    setFocusedZone('A')
-    setViewMode('overview')
-    setSearchTerm('')
-    setStatusFilter('all')
-    setTypeFilter('all')
-    setZoneFilter('all')
-  }
-
-  function handleSimulateOccupancy() {
-    setSpots((prevSpots) =>
-      prevSpots.map((spot) => {
-        const randomNumber = Math.random()
-        const shouldToggleStatus = randomNumber > 0.82
-        const shouldToggleMaintenance = randomNumber < 0.0001
-
-        let nextStatus = spot.status
-        let nextMaintenance = spot.maintenance
-
-        if (shouldToggleStatus && !spot.maintenance) {
-          nextStatus = spot.status === 'free' ? 'occupied' : 'free'
-        }
-
-        if (shouldToggleMaintenance) {
-          nextMaintenance = !spot.maintenance
-        }
-
-        if (nextStatus !== spot.status || nextMaintenance !== spot.maintenance) {
-          return {
-            ...spot,
-            status: nextStatus,
-            maintenance: nextMaintenance,
-            last_updated: getCurrentDateTime(),
-          }
-        }
-
-        return spot
-      })
-    )
-
-    setSelectedSpot(null)
-    setEditSpot(null)
-  }
-
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -573,13 +485,6 @@ function App({ user, onLogout }) {
               <p className="muted-text">Posti temporaneamente non utilizzabili.</p>
             </div>
           </section>
-
-          <AdminActions
-            onExportJson={handleExportJson}
-            onImportJson={handleImportJson}
-            onResetDataset={handleResetDataset}
-            onSimulateOccupancy={handleSimulateOccupancy}
-          />
 
           <section className="panel">
             <div className="summary-header">
