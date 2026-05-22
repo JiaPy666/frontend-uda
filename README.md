@@ -30,6 +30,11 @@ mkcert -install
 mkcert -CAROOT
 ```
 
+- poi deve creare il certificato usando il comando:
+```
+mkcert -cert-file ./certs/localhost.pem -key-file ./certs/localhost-key.pem localhost 127.0.0.1 ::1
+```
+
 - il browser avvia con:
 ```
 "C:\Program Files\Google\Chrome\Application\chrome.exe" --proxy-bypass-list="*" --proxy-server="http://10.250.0.1:8080" --user-data-dir="C:\ChromeDevProfile"
