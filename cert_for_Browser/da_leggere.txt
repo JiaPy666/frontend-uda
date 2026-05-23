@@ -1,0 +1,4 @@
+Questo file deve essere importato nel browser del destinatario per fare funzionare il https
+
+Il file rootCA.pem deve usare quello pc che hai creato il certificato e usa il comando
+mkcert -CAROOT
